@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Unmasked: 100 Desafios</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="loading-screen">
+    <div class="loader-content">
+        <div class="loader-mask">🎭</div>
+            
+            <div class="loader-bar-container">
+              <div class="loader-bar-fill"></div>
+            </div>
+          <p class="loader-text">DECODIFICANDO MEMÓRIAS...</p>
+        </div>
+    </div>
+
+    <div id="combo-text"></div>
+
+    <div id="world-selection-screen" class="screen">
+        <header class="game-header">
+           <div class="logo-container">
+            <span class="logo-mask">🎭</span> 
+        
+              <div class="title-group">
+               <h1 class="main-title">Memory Unmasked</h1>
+                <p class="subtitle">Desvende os Mistérios</p>
+              </div>
+           </div>
+        </header>
+        
+        <div id="worlds-container" class="worlds-grid">
+            </div>
+        
+        <button id="clear-save" class="danger-btn">Resetar Todo o Progresso</button>
+    </div>
+
+    <div id="level-selection-screen" class="screen" style="display: none;">
+        <header class="game-header">
+            <div class="logo-container" style="display: flex; align-items: center; width: 100%;">
+                <button onclick="backToWorlds()" class="control-btn" style="margin-right: 15px;">
+                    <span class="icon">⬅</span> Mundos
+                </button>
+                <div>
+                    <h1 class="main-title">Níveis</h1>
+                    <p id="current-world-name" class="subtitle">Mundo 1: O Despertar</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="menu-divider"></div>
+        <div id="level-map" class="map">
+            </div>
+    </div>
+
+    <div id="game-screen" class="screen" style="display: none;">
+        <div class="game-controls-header">
+            <button id="back-btn" class="control-btn" title="Sair da fase">
+                <span class="icon">🚪</span>
+                <span class="btn-text">Sair</span>
+            </button>
+            
+            <div class="game-status-info">
+              <div class="level-badge">Fase <span id="current-level-id">1</span></div>
+              <div id="difficulty-label" class="difficulty-tag">Normal</div>
+              <div class="attempts-count">Erros: <b id="attempts">0</b></div>
+            </div>
+
+            <button id="restart-level-btn" class="control-btn" title="Reiniciar fase">
+                <span class="icon">🔄</span>
+            </button>
+        </div>
+
+        <div id="timer-container">
+            <div id="timer-bar"></div>
+        </div>
+
+        <div id="game-board" class="board">
+            </div>
+        
+        <div class="game-footer-info">
+            <small>Recorde: <b id="best-score">-</b></small>
+        </div>
+    </div>
+
+    <div id="victory-modal" class="modal">
+        <div class="modal-content">
+            <div class="victory-icon">🏆</div>
+            <h2>Nível Concluído!</h2>
+            <div id="stars-container" class="stars"></div>
+            <div class="victory-stats">
+                <p>Erros cometidos: <span id="final-attempts">0</span></p>
+                <p id="new-record-msg" style="display: none; color: var(--success); font-weight: bold;">✨ NOVO RECORDE! ✨</p>
+            </div>
+            <button id="continue-btn" class="control-btn" style="width: 100%; justify-content: center; margin-top: 15px;">
+                Continuar Jornada
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
