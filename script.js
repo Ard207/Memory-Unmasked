@@ -6,7 +6,12 @@ const sounds = {
     click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3')
 };
 
+// --- NOVAS VARIÁVEIS DE CONFIGURAÇÃO (Persistentes) ---
+let isMuted = JSON.parse(localStorage.getItem('memory_unmasked_muted')) || false;
+
+// Função de som atualizada para respeitar o Mudo
 function playSfx(name) {
+    if (isMuted) return; 
     sounds[name].currentTime = 0;
     sounds[name].volume = 0.3;
     sounds[name].play().catch(() => {});
@@ -25,15 +30,14 @@ function setupLevels() {
         let levelsInWorld = [];
         for (let i = worldStart; i <= worldEnd; i++) levelsInWorld.push(i);
 
-        // A partir do nível 5 do Mundo 1, sorteia 10 níveis com tempo por mundo
-        let potentialTimerLevels = levelsInWorld.filter(lvl => lvl >= 5);
-        let selectedTimerLevels = potentialTimerLevels.sort(() => Math.random() - 0.5).slice(0, 10);
+        let selectedTimerLevels = levelsInWorld.filter(lvl => lvl >= 5);
+        let timerIndices = selectedTimerLevels.filter((lvl, idx) => (lvl % 2 === 0 || lvl % 3 === 0)).slice(0, 10);
 
         levelsInWorld.forEach(i => {
             const pairs = Math.min(3 + Math.floor(i / 10), 12); 
             levelsConfig[i] = { 
                 pairs: pairs, 
-                hasTimer: selectedTimerLevels.includes(i) 
+                hasTimer: timerIndices.includes(i) 
             };
         });
     }
@@ -84,17 +88,10 @@ function openWorld(num) {
 
 function backToWorlds() {
     playSfx('click');
-    
-    // 1. Remove a classe de tema do mundo (world-2, world-3, etc)
-    // Isso faz o fundo voltar ao padrão azul (world-1)
     document.body.className = 'world-1'; 
-
-    // 2. Controla a exibição das telas
     document.getElementById('level-selection-screen').style.display = 'none';
     document.getElementById('game-screen').style.display = 'none';
     document.getElementById('world-selection-screen').style.display = 'flex';
-
-    // 3. Atualiza a lista de mundos para mostrar cadeados abertos/fechados
     renderWorlds();
 }
 
@@ -105,8 +102,16 @@ function renderLevels() {
     for (let i = start; i <= start + 19; i++) {
         const btn = document.createElement('button');
         const isUnlocked = i === 1 || (progress.stars && progress.stars[i-1]);
-        btn.className = `level-node ${progress.stars[i] ? 'completed' : ''} ${isUnlocked ? 'unlocked' : ''}`;
-        btn.innerHTML = `<span>${i}${levelsConfig[i].hasTimer?'⏱️':''}</span><div class="level-stars">${'⭐'.repeat(progress.stars[i] || 0)}</div>`;
+        
+        const fixedFactor = ((i * 123.45) % 0.9) + 0.5;
+        const isHard = levelsConfig[i].hasTimer && fixedFactor <= 0.75;
+
+        btn.className = `level-node ${progress.stars[i] ? 'completed' : ''} ${isUnlocked ? 'unlocked' : ''} ${isHard ? 'level-hard' : ''}`;
+        
+        const diffText = isHard ? '<br><small class="map-diff-tag">DIFÍCIL</small>' : '';
+
+        btn.innerHTML = `<span>${i}${levelsConfig[i].hasTimer?'⏱️':''}</span>${diffText}<div class="level-stars">${'⭐'.repeat(progress.stars[i] || 0)}</div>`;
+        
         if(isUnlocked) btn.onclick = () => { playSfx('click'); startLevel(i); };
         map.appendChild(btn);
     }
@@ -120,7 +125,11 @@ function startLevel(num) {
     attempts = 0;
     [firstCard, secondCard, lockBoard] = [null, null, false];
     
-    document.getElementById('attempts').textContent = '0';
+    // Atualizado para mostrar o contador de JOGADAS inicializado
+    const attemptsDisplay = document.getElementById('attempts');
+    attemptsDisplay.textContent = '0';
+    attemptsDisplay.classList.remove('pop-effect'); // Garante que comece sem animação
+
     document.getElementById('current-level-id').textContent = num;
     document.getElementById('best-score').textContent = progress.bests[num] ?? '-';
     document.getElementById('level-selection-screen').style.display = 'none';
@@ -138,16 +147,18 @@ function startLevel(num) {
     diffLabel.className = 'difficulty-tag';
 
     if (config.hasTimer) {
-        // LÓGICA DE AGILIDADE: Base de 8s por par
         const baseTime = config.pairs * 8; 
-        const randomFactor = (Math.random() * (1.4 - 0.5) + 0.5); 
-        const finalTime = Math.floor(baseTime * randomFactor);
+        const worldSpeedFactor = 1 - ((currentWorld - 1) * 0.1); 
+        const fixedFactor = ((num * 123.45) % 0.9) + 0.5; 
         
-        if (randomFactor <= 0.75) {
-            diffLabel.textContent = "AGILIDADE 🔥";
-            diffLabel.classList.add('diff-hard');
-            timerBar.style.animation = "pulse-fast 0.5s infinite";
-        } else if (randomFactor >= 1.2) {
+        let finalTime = Math.floor(baseTime * fixedFactor * worldSpeedFactor);
+
+        if (fixedFactor <= 0.75) {
+            finalTime = Math.floor(finalTime * 0.5); 
+            diffLabel.textContent = "DIFICIL 🔥"; 
+            diffLabel.classList.add('diff-hard'); 
+            timerBar.style.animation = "pulse-fast 0.3s infinite";
+        } else if (fixedFactor >= 1.2) {
             diffLabel.textContent = "RELAX ✨";
             diffLabel.classList.add('diff-easy');
         } else {
@@ -219,11 +230,18 @@ function flipCard() {
     this.classList.add('unmasked');
     if (!firstCard) { firstCard = this; return; }
     secondCard = this;
+    
     attempts++;
-    document.getElementById('attempts').textContent = attempts;
+    const attemptsDisplay = document.getElementById('attempts');
+    attemptsDisplay.textContent = attempts;
+    
     lockBoard = true;
 
     if (firstCard.dataset.id === secondCard.dataset.id) {
+        // --- ATUALIZAÇÃO: Efeito visual no contador ao acertar ---
+        attemptsDisplay.classList.add('pop-effect');
+        setTimeout(() => attemptsDisplay.classList.remove('pop-effect'), 400);
+
         firstCard.classList.add('matched');
         secondCard.classList.add('matched');
         setTimeout(() => playSfx('match'), 200);
@@ -234,8 +252,8 @@ function flipCard() {
         }
     } else {
         playSfx('error');
+        this.classList.add('shake');
         firstCard.classList.add('shake');
-        secondCard.classList.add('shake');
         setTimeout(() => {
             firstCard.classList.remove('unmasked', 'shake');
             secondCard.classList.remove('unmasked', 'shake');
@@ -252,10 +270,9 @@ function win() {
     if (isNew) progress.bests[activeLevel] = attempts;
     
     let p = levelsConfig[activeLevel].pairs;
-    let isAgility = document.getElementById('difficulty-label').textContent.includes("AGILIDADE");
+    let isHard = document.getElementById('difficulty-label').textContent.includes("DIFICIL");
     
-    // Tolerância maior para 3 estrelas no modo Agilidade
-    let tolerance = isAgility ? 4 : 1; 
+    let tolerance = isHard ? 4 : 1; 
     let stars = attempts <= p + tolerance ? 3 : (attempts <= p + tolerance + 3 ? 2 : 1);
     
     progress.stars[activeLevel] = Math.max(progress.stars[activeLevel] || 0, stars);
@@ -268,12 +285,36 @@ function win() {
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
 }
 
+// --- FUNÇÕES DO MENU DE CONFIGURAÇÕES ---
+
+function toggleSettings() {
+    const modal = document.getElementById('settings-modal');
+    modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    updateMuteUI();
+}
+
+function toggleMute() {
+    isMuted = !isMuted;
+    localStorage.setItem('memory_unmasked_muted', JSON.stringify(isMuted));
+    updateMuteUI();
+}
+
+function updateMuteUI() {
+    const statusTxt = document.getElementById('mute-status');
+    const icon = document.getElementById('mute-icon');
+    if(statusTxt) statusTxt.textContent = isMuted ? "DESLIGADO" : "LIGADO";
+    if(icon) icon.textContent = isMuted ? "🔇" : "🔊";
+    const muteBtn = document.getElementById('mute-btn');
+    if(muteBtn) muteBtn.style.opacity = isMuted ? "0.6" : "1";
+}
+
 // --- EVENTOS ---
 window.addEventListener('load', () => {
     setTimeout(() => {
-        document.getElementById('loading-screen').classList.add('loader-hidden');
+        const loader = document.getElementById('loading-screen');
+        if(loader) loader.classList.add('loader-hidden');
         renderWorlds();
-    }, 2000);
+    }, 2200);
 });
 
 document.getElementById('restart-level-btn').onclick = () => { 
@@ -295,14 +336,11 @@ document.getElementById('continue-btn').onclick = () => {
     renderLevels(); 
 };
 
-document.getElementById('clear-save').onclick = () => { 
-    if(confirm("Apagar todo o progresso?")) { localStorage.clear(); location.reload(); } 
+document.getElementById('back-to-worlds').onclick = backToWorlds;
+document.getElementById('mute-btn').onclick = toggleMute;
+document.getElementById('clear-save-settings').onclick = () => { 
+    if(confirm("ATENÇÃO: Isso apagará todas as suas estrelas e recordes. Deseja continuar?")) { 
+        localStorage.clear(); 
+        location.reload(); 
+    } 
 };
-
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const loader = document.getElementById('loading-screen');
-        loader.classList.add('loader-hidden');
-        renderWorlds();
-    }, 2200); 
-});

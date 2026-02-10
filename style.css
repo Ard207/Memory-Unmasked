@@ -22,7 +22,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    /* overflow: hidden;   REMOVIDO PARA PERMITIR ROLAGEM */
     transition: background 0.8s ease;
 }
 
@@ -94,7 +94,25 @@ body.world-5 {
 .dot.active { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 
 /* --- MAPA E NÍVEIS --- */
-.screen { width: 100%; max-width: 450px; padding: 20px; display: flex; flex-direction: column; align-items: center; position: relative; }
+.screen { 
+    width: 100%; 
+    max-width: 450px; 
+    padding: 20px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    position: relative;
+    /* ATUALIZAÇÃO PARA CELULAR */
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* ADIÇÃO PARA ESCONDER BARRA */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+/* Esconder barra Chrome/Safari */
+.screen::-webkit-scrollbar { display: none; }
+
 .map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; margin-bottom: 20px; padding: 10px; }
 .level-node { height: 70px; border-radius: 15px; border: 2px solid rgba(255, 255, 255, 0.1); background: var(--card); color: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; transition: 0.2s; font-weight: bold; }
 .level-node.unlocked { border-color: var(--accent); }
@@ -102,19 +120,18 @@ body.world-5 {
 .level-stars { font-size: 0.6rem; color: var(--star); }
 
 /* --- JOGO E CARDS --- */
-/* --- JOGO E CARDS (Ajustado para ficarem mais juntos) --- */
 .board { 
     display: grid; 
-    gap: 8px; /* Espaço reduzido entre as cartas */
+    gap: 8px; 
     justify-content: center; 
     align-content: center;
-    width: fit-content; /* Ocupa apenas o espaço das cartas */
-    margin: 0 auto; /* Centraliza o tabuleiro todo na tela */
+    width: fit-content; 
+    margin: 0 auto; 
     padding: 10px;
 }
 
 .card { 
-    width: 65px; /* Tamanho levemente reduzido para caber melhor */
+    width: 65px; 
     height: 85px; 
     background: var(--card); 
     border: 2px solid rgba(255, 255, 255, 0.1); 
@@ -150,14 +167,14 @@ body.world-5 {
 
 /* Quando a carta for desmascarada (Unmasked) */
 .card.unmasked .prop {
-    transform: translateY(-50px) rotate(20deg); /* Máscara "pula" para cima */
+    transform: translateY(-50px) rotate(20deg); 
     opacity: 0;
     filter: blur(5px);
 }
 
 .card.unmasked .face {
     opacity: 1;
-    transform: scale(1.1); /* Carinha surge com um leve zoom */
+    transform: scale(1.1); 
     text-shadow: 0 0 15px var(--accent);
 }
 
@@ -188,13 +205,16 @@ body.world-5 {
     flex-direction: column;
     gap: 20px;
     width: 100%;
-    max-height: 70vh; /* Permite rolagem se a tela for pequena */
-    overflow-y: auto;
+    /* ATUALIZAÇÃO PARA ROLAGEM NO CELULAR */
     padding: 10px;
     margin-top: 20px; 
+    padding-bottom: 80px; /* Espaço extra no final */
+    /* ADIÇÃO PARA ESCONDER BARRA */
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
-
-/* Esconder a barra de rolagem para ficar mais limpo */
+/* Esconder barra Chrome/Safari */
 .worlds-grid::-webkit-scrollbar { display: none; }
 
 .world-card {
@@ -215,7 +235,6 @@ body.world-5 {
     border-color: rgba(56, 189, 248, 0.3);
 }
 
-/* Efeito de brilho ao passar o mouse (apenas nos liberados) */
 .world-card.unlocked:hover {
     transform: scale(1.03);
     border-color: var(--accent);
@@ -320,15 +339,16 @@ body.world-5 {
 .attempts-count {
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.7);
+    /* ADIÇÃO: Estilo para quando você mudar o nome para JOGADAS */
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
-/* Ajuste no botão de Sair para mobile */
 @media (max-width: 400px) {
-    .btn-text { display: none; } /* Esconde o texto "Sair" em telas muito pequenas */
+    .btn-text { display: none; } 
     .control-btn { padding: 10px; }
 }
 
-/* Animação de sacudir (Shake) */
 @keyframes shake-urgent {
     0% { transform: translateX(0); }
     25% { transform: translateX(-3px) rotate(-5deg); }
@@ -337,22 +357,19 @@ body.world-5 {
     100% { transform: translateX(0); }
 }
 
-/* Classe de alerta para o botão de reiniciar */
 .timer-danger {
-    background: rgba(244, 63, 94, 0.2) !important; /* Vermelho suave */
+    background: rgba(244, 63, 94, 0.2) !important;
     border-color: var(--danger) !important;
     color: var(--danger) !important;
-    animation: shake-urgent 0.3s infinite; /* Sacode sem parar */
+    animation: shake-urgent 0.3s infinite;
     box-shadow: 0 0 15px var(--danger);
 }
 
-/* Deixar a barra de tempo vermelha quando estiver acabando */
 .bar-danger {
     background: var(--danger) !important;
     box-shadow: 0 0 10px var(--danger);
 }
 
-/* Ícone de status (Seta ou Cadeado) */
 .status-icon {
     font-size: 1.5rem;
     background: rgba(255, 255, 255, 0.05);
@@ -385,7 +402,6 @@ body.world-5 {
     transition: 0.3s;
 }
 
-/* Cores dinâmicas para a dificuldade */
 .diff-hard { 
     color: #ff4757; 
     border: 1px solid #ff4757;
@@ -404,21 +420,18 @@ body.world-5 {
     opacity: 0.7;
 }
 
-/* Animação para níveis de agilidade */
 @keyframes pulse-fast {
     0% { filter: brightness(1) drop-shadow(0 0 2px var(--danger)); }
     50% { filter: brightness(1.5) drop-shadow(0 0 10px var(--danger)); }
     100% { filter: brightness(1) drop-shadow(0 0 2px var(--danger)); }
 }
 
-/* Deixar o rótulo de Agilidade mais chamativo */
 .diff-hard {
     background: var(--danger);
     color: white !important;
-    animation: shake-urgent 0.2s infinite; /* Usa a animação de sacudir que já criamos */
+    animation: shake-urgent 0.2s infinite;
 }
 
-/* Container que agrupa a máscara e o texto */
 .logo-container {
     display: flex;
     align-items: center;
@@ -427,22 +440,16 @@ body.world-5 {
     margin: 30px 0;
 }
 
-/* A Máscara: Grande, Brilhante e Animada */
 .logo-mask {
-    font-size: 4rem; /* Tamanho proporcional ao título duplo */
+    font-size: 4rem;
     line-height: 1;
     display: flex;
     align-items: center;
-    
-    /* Brilho Neon que usa a cor do mundo (--accent) */
     filter: drop-shadow(0 0 15px var(--accent)) drop-shadow(0 0 30px var(--accent));
-    
-    /* Animação de brilho pulsante */
     animation: neon-pulse 2s ease-in-out infinite;
     user-select: none;
 }
 
-/* Grupo de Texto */
 .title-group {
     display: flex;
     flex-direction: column;
@@ -456,16 +463,10 @@ body.world-5 {
     font-weight: 900;
     letter-spacing: -1px;
     line-height: 0.9;
-    
-    /* Gradiente Branco para Cinza Claro (Efeito Metálico) */
     background: linear-gradient(to bottom, #ffffff 30%, #a1a1a1 100%);
-    
-    /* Essencial para o efeito de clipping */
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    
-    /* Brilho extra para evitar o aspecto fosco/amarelado */
     filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
 }
 
@@ -474,12 +475,11 @@ body.world-5 {
     font-size: 0.8rem;
     letter-spacing: 4px;
     text-transform: uppercase;
-    color: var(--accent); /* O subtítulo também brilha com a cor do mundo */
+    color: var(--accent);
     font-weight: bold;
     opacity: 0.9;
 }
 
-/* Animação para a Máscara brilhar e flutuar */
 @keyframes neon-pulse {
     0%, 100% { 
         transform: scale(1) translateY(0);
@@ -542,7 +542,6 @@ body.world-5 {
     animation: blink-text 1s infinite;
 }
 
-/* Animações */
 @keyframes mask-pulse {
     0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px var(--accent)); }
     50% { transform: scale(1.1); filter: drop-shadow(0 0 40px var(--accent)); }
@@ -558,11 +557,194 @@ body.world-5 {
     50% { opacity: 0.4; }
 }
 
-/* Classe para sumir a tela */
 .loader-hidden {
     opacity: 0;
     visibility: hidden;
 }
 
+@media (max-width: 480px) {
+    .board {
+        gap: 5px;
+    }
+    .card {
+        width: 55px;
+        height: 75px;
+    }
+    .card .prop, .card .face {
+        font-size: 1.6rem;
+    }
+}
 
+.card:not(.unmasked):not(.matched):hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4), 0 0 10px var(--accent);
+}
 
+.card.shake {
+    animation: shake-error 0.4s ease-in-out;
+    border-color: var(--danger);
+}
+
+@keyframes shake-error {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+.worlds-grid {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.stars {
+    font-size: 2.5rem;
+    margin: 15px 0;
+    color: var(--star);
+    text-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+    letter-spacing: 10px;
+}
+
+.diff-hard {
+    background: linear-gradient(90deg, var(--danger), #ff8c00) !important;
+    color: white !important;
+    text-shadow: 0 0 5px black;
+    box-shadow: 0 0 20px var(--danger);
+}
+
+@keyframes pulse-insane {
+    0% { filter: brightness(1) saturate(1); }
+    50% { filter: brightness(1.8) saturate(2); }
+    100% { filter: brightness(1) saturate(1); }
+}
+
+.timer-danger {
+    animation: shake-urgent 0.1s infinite !important;
+}
+
+#settings-trigger {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    font-size: 1.8rem;
+    cursor: pointer;
+    z-index: 1001;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 0 5px var(--accent));
+}
+
+#settings-trigger:hover {
+    transform: rotate(90deg) scale(1.1);
+}
+
+#settings-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.menu-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 15px 0;
+}
+
+#mute-btn {
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#mute-btn:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 480px) {
+    .world-selector button {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+    }
+
+    .game-controls-header {
+        padding: 10px;
+        gap: 5px;
+    }
+
+    .control-btn {
+        padding: 10px 8px;
+        font-size: 0.7rem;
+    }
+
+    .btn-text {
+        display: none;
+    }
+}
+
+.level-node.level-hard.unlocked {
+    background: linear-gradient(135.45deg, #ff4b2b 0%, #ff416c 100%);
+    border-color: #ff0000;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+}
+
+.map-diff-tag {
+    display: block;
+    font-size: 0.6rem;
+    color: #ff0000;
+    font-weight: bold;
+    margin-top: -5px;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.diff-hard {
+    color: #ffffff !important;
+    background-color: #ff0000 !important;
+    padding: 2px 8px;
+    border-radius: 4px;
+    animation: pulse-danger 1s infinite;
+}
+
+@keyframes pulse-danger {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,0,0,0.7); }
+    50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(255,0,0,0.9); }
+    100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,0,0,0.7); }
+}
+
+/* --- ADIÇÃO FINAL: ESCONDER BARRA DE ROLAGEM GLOBALMENTE --- */
+* {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+/* Efeito para quando o número de jogadas ou acertos muda */
+@keyframes score-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); color: var(--success); }
+    100% { transform: scale(1); }
+}
+
+.score-animate {
+    animation: score-pop 0.4s ease-out;
+    display: inline-block;
+}
+
+/* Animação de impacto no contador */
+@keyframes pop-animation {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.5); color: var(--success); text-shadow: 0 0 10px var(--success); }
+    100% { transform: scale(1); }
+}
+
+.pop-effect {
+    animation: pop-animation 0.4s ease-out;
+    display: inline-block;
+}

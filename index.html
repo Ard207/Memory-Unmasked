@@ -36,7 +36,7 @@
         <div id="worlds-container" class="worlds-grid">
             </div>
         
-        <button id="clear-save" class="danger-btn">Resetar Todo o Progresso</button>
+        
     </div>
 
     <div id="level-selection-screen" class="screen" style="display: none;">
@@ -67,7 +67,7 @@
             <div class="game-status-info">
               <div class="level-badge">Fase <span id="current-level-id">1</span></div>
               <div id="difficulty-label" class="difficulty-tag">Normal</div>
-              <div class="attempts-count">Erros: <b id="attempts">0</b></div>
+              <div class="attempts-count">Jogadas: <b id="attempts">0</b></div>
             </div>
 
             <button id="restart-level-btn" class="control-btn" title="Reiniciar fase">
@@ -93,7 +93,7 @@
             <h2>Nível Concluído!</h2>
             <div id="stars-container" class="stars"></div>
             <div class="victory-stats">
-                <p>Erros cometidos: <span id="final-attempts">0</span></p>
+                <p>Jogadas: <span id="final-attempts">0</span></p>
                 <p id="new-record-msg" style="display: none; color: var(--success); font-weight: bold;">✨ NOVO RECORDE! ✨</p>
             </div>
             <button id="continue-btn" class="control-btn" style="width: 100%; justify-content: center; margin-top: 15px;">
@@ -101,6 +101,30 @@
             </button>
         </div>
     </div>
+
+    <div id="settings-trigger" onclick="toggleSettings()" style="position: fixed; top: 20px; right: 20px; font-size: 1.5rem; cursor: pointer; z-index: 100;">⚙️</div>
+
+   <div id="settings-modal" class="modal">
+        <div class="modal-content">
+          <h2>Configurações</h2>
+          <div class="menu-divider"></div>
+          
+            <div style="margin: 20px 0;">
+              <button id="mute-btn" class="control-btn" style="width: 100%; justify-content: center; margin-bottom: 10px;">
+                <span id="mute-icon">🔊</span> Som: <span id="mute-status">LIGADO</span>
+               </button>
+            
+              <button id="clear-save-settings" class="danger-btn" style="width: 100%; padding: 12px;">
+                Resetar Todo o Progresso
+              </button>
+            </div>
+
+          <button onclick="toggleSettings()" class="control-btn" style="width: 100%; justify-content: center; background: rgba(255,255,255,0.1); border: none;">
+            Fechar
+          </button>
+        </div>
+    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="script.js"></script>
