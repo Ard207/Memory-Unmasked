@@ -75,8 +75,8 @@ body.world-5 {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10000;
-    transition: opacity 0.5s ease, visibility 0.5s;
+    z-index: 99999; /* Aumentado para cobrir a engrenagem */
+    transition: opacity 0.8s ease, visibility 0.8s;
 }
 .loader-content { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; }
 .loader-icon { font-size: 4rem; animation: pulse 1.5s infinite ease-in-out; }
@@ -628,7 +628,7 @@ body.world-5 {
     right: 20px;
     font-size: 1.8rem;
     cursor: pointer;
-    z-index: 1001;
+    z-index: 1001; /* Mantido menor que o loading */
     transition: transform 0.3s ease;
     filter: drop-shadow(0 0 5px var(--accent));
 }
@@ -747,4 +747,204 @@ body.world-5 {
 .pop-effect {
     animation: pop-animation 0.4s ease-out;
     display: inline-block;
+}
+
+/* Texto de Combo que sobe na tela */
+#combo-text {
+    position: fixed;
+    pointer-events: none;
+    font-weight: 900;
+    font-size: 2.5rem;
+    color: var(--star);
+    text-shadow: 0 0 15px var(--star), 0 0 30px #fff;
+    z-index: 2000;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: none;
+}
+
+.combo-animation {
+    animation: combo-up 0.8s ease-out forwards;
+}
+
+@keyframes combo-up {
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -50px) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -120px) scale(1); }
+}
+
+/* Efeito de calor no timer durante o combo */
+.timer-boost {
+    filter: saturate(2) brightness(1.5);
+    box-shadow: 0 0 20px var(--accent);
+}
+
+/* Texto de Punição -3s */
+#penalty-text {
+    position: fixed;
+    pointer-events: none;
+    font-weight: 900;
+    font-size: 2rem;
+    color: #ff4757; /* Vermelho vibrante */
+    text-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+    z-index: 2000;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+}
+
+.penalty-animation {
+    animation: penalty-float 0.7s ease-in-out forwards;
+}
+
+@keyframes penalty-float {
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.8); }
+    20% { opacity: 1; transform: translate(-50%, -30px) scale(1.1) rotate(5deg); }
+    40% { transform: translate(-50%, -35px) scale(1.1) rotate(-5deg); }
+    100% { opacity: 0; transform: translate(-50%, -80px) scale(1); }
+}
+
+/* Flashes de Tela */
+.flash-red { animation: flash-red-anim 0.3s forwards; }
+.flash-gold { animation: flash-gold-anim 0.5s forwards; }
+
+@keyframes flash-red-anim {
+    0% { box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.5); }
+    100% { box-shadow: inset 0 0 0px rgba(255, 0, 0, 0); }
+}
+
+@keyframes flash-gold-anim {
+    0% { box-shadow: inset 0 0 100px rgba(255, 215, 0, 0.6); }
+    100% { box-shadow: inset 0 0 0px rgba(255, 215, 0, 0); }
+}
+
+/* Modo Frenesi (Cartas brilhando) */
+.frenzy-active .card.unmasked {
+    box-shadow: 0 0 20px #fff, 0 0 40px var(--star);
+    border-color: #fff;
+}
+
+/* Estilos dos Mundos (Backgrounds) */
+body.world-1 { background: linear-gradient(135deg, #1a1a2e, #16213e); }
+body.world-2 { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); }
+body.world-3 { background: linear-gradient(135deg, #2d0b3d, #4b0082); } /* Neon */
+body.world-4 { background: linear-gradient(135deg, #232526, #414345); } /* Ruínas */
+body.world-5 { background: linear-gradient(135deg, #4b0000, #000000); } /* Final */
+
+/* Carta de Interrogação */
+.card.mystery::before {
+    content: '?';
+    position: absolute;
+    font-size: 2rem;
+    color: rgba(255,255,255,0.2);
+    z-index: 1;
+}
+
+/* --- SUPORTE AO FRENESI NO CORPO (ADICIONADO) --- */
+body.frenzy-active {
+    background: linear-gradient(135deg, #422006, #000) !important;
+    animation: pulse-insane 1s infinite;
+}
+
+/* Quando a tela de loading estiver visível, escondemos o trigger */
+body:has(#loading-screen:not(.loader-hidden)) #settings-trigger {
+    display: none;
+}
+
+/* ==========================================================================
+   ADIÇÕES DE EXPANSÃO (AUMENTANDO LINHAS SEM REMOVER AS ORIGINAIS)
+   ========================================================================== */
+
+/* Camada Extra de Partículas para Mundos de Nível Alto */
+body.world-5::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, var(--accent) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: -1;
+    animation: background-drift 20s linear infinite;
+}
+
+@keyframes background-drift {
+    from { background-position: 0 0; }
+    to { background-position: 500px 500px; }
+}
+
+/* Efeito de Reflexo no Card (Glassmorphism Avançado) */
+.card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+    transform: skewX(-25deg);
+    transition: 0.5s;
+    pointer-events: none;
+}
+
+.card:hover::after {
+    left: 150%;
+}
+
+/* Melhoria na Elegância das Modais */
+.modal-content {
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(56, 189, 248, 0.2);
+    transform: scale(0.9);
+    animation: modal-pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes modal-pop-in {
+    to { transform: scale(1); }
+}
+
+/* Estilização dos Botões de Navegação das Modais */
+.modal-btn {
+    padding: 12px 25px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 900;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: 0.3s;
+    margin: 10px;
+}
+
+.modal-btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+}
+
+.modal-btn-primary:hover {
+    box-shadow: 0 0 20px var(--accent);
+    transform: translateY(-2px);
+}
+
+/* Efeito de Scanline (Retro Cyberpunk) opcional para World 4 */
+body.world-4::before {
+    content: " ";
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 1000;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+/* Rodapé Informativo (Versão/Copyright Fake) */
+.game-footer {
+    position: absolute;
+    bottom: 10px;
+    font-size: 0.6rem;
+    opacity: 0.4;
+    color: white;
+    letter-spacing: 2px;
 }

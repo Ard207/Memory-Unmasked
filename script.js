@@ -3,26 +3,26 @@ const sounds = {
     match: new Audio('https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3'),
     error: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'),
     victory: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
-    click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3')
+    click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+    combo: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
+    frenzy: new Audio('https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3') // NOVO SOM
 };
 
-// --- NOVAS VARIÁVEIS DE CONFIGURAÇÃO (Persistentes) ---
+// --- VARIÁVEIS DE ESTADO ---
 let isMuted = JSON.parse(localStorage.getItem('memory_unmasked_muted')) || false;
+let comboCount = 0;
+let isFrenzy = false; // NOVA VARIÁVEL
+let progress = JSON.parse(localStorage.getItem('memory_unmasked_v100')) || { stars: {}, bests: {} };
+let activeLevel, attempts, firstCard, secondCard, lockBoard = false, timerInterval, timeLeft, currentMaxTime;
 
-// Função de som atualizada para respeitar o Mudo
-function playSfx(name) {
-    if (isMuted) return; 
-    sounds[name].currentTime = 0;
-    sounds[name].volume = 0.3;
-    sounds[name].play().catch(() => {});
-}
-
-// --- CONFIGURAÇÃO ---
-const TOTAL_LEVELS = 100;
-const levelsConfig = {};
 const worldNames = ["O Despertar", "Sombras Digitais", "Neblina de Neon", "Ruínas do Pensamento", "A Máscara Final"];
+const levelsConfig = {};
 let currentWorld = 1;
 
+const masks = ['👽', '👹', '👻', '🤖', '🤡', '💀', '🎃', '🥷', '👾', '🐲', '👺', '💩', '🧛', '🧟', '🧙'];
+const faces = ['😀', '😎', '🦊', '🐶', '🐸', '🦁', '🐯', '🐱', '🍎', '🍌', '🍕', '🚀', '💎', '⚽', '🎨'];
+
+// --- INICIALIZAÇÃO ---
 function setupLevels() {
     for (let w = 0; w < 5; w++) {
         let worldStart = (w * 20) + 1;
@@ -35,28 +35,32 @@ function setupLevels() {
 
         levelsInWorld.forEach(i => {
             const pairs = Math.min(3 + Math.floor(i / 10), 12); 
+            // NOVO: Adicionada propriedade isMystery para Mundos 3, 4 e 5
+            const hasMystery = (w >= 2 && i % 3 === 0);
             levelsConfig[i] = { 
                 pairs: pairs, 
-                hasTimer: timerIndices.includes(i) 
+                hasTimer: timerIndices.includes(i),
+                isMystery: hasMystery
             };
         });
     }
 }
 setupLevels();
 
-let progress = JSON.parse(localStorage.getItem('memory_unmasked_v100')) || { stars: {}, bests: {} };
-let activeLevel, attempts, firstCard, secondCard, lockBoard = false, timerInterval, timeLeft;
+function playSfx(name) {
+    if (isMuted) return; 
+    sounds[name].currentTime = 0;
+    sounds[name].volume = 0.3;
+    sounds[name].play().catch(() => {});
+}
 
-const masks = ['👽', '👹', '👻', '🤖', '🤡', '💀', '🎃', '🥷', '👾', '🐲', '👺', '💩', '🧛', '🧟', '🧙'];
-const faces = ['😀', '😎', '🦊', '🐶', '🐸', '🦁', '🐯', '🐱', '🍎', '🍌', '🍕', '🚀', '💎', '⚽', '🎨'];
-
-// --- NAVEGAÇÃO E TEMAS ---
-
+// --- NAVEGAÇÃO ---
 function renderWorlds() {
     document.body.className = 'world-1'; 
     document.getElementById('world-selection-screen').style.display = 'flex';
     document.getElementById('level-selection-screen').style.display = 'none';
     document.getElementById('game-screen').style.display = 'none';
+    document.getElementById('settings-trigger').style.display = 'block';
 
     const container = document.getElementById('worlds-container');
     container.innerHTML = '';
@@ -77,13 +81,29 @@ function renderWorlds() {
     });
 }
 
+// ATUALIZAÇÃO: Função de abrir mundo agora inclui Tela de Carregamento e esconde a engrenagem
 function openWorld(num) {
-    currentWorld = num;
-    document.body.className = `world-${num}`; 
-    document.getElementById('world-selection-screen').style.display = 'none';
-    document.getElementById('level-selection-screen').style.display = 'flex';
-    document.getElementById('current-world-name').textContent = `Mundo ${num}: ${worldNames[num-1]}`;
-    renderLevels();
+    const loader = document.getElementById('loading-screen');
+    const settingsBtn = document.getElementById('settings-trigger');
+
+    // 1. Ativa o loader e remove a engrenagem
+    loader.classList.remove('loader-hidden');
+    settingsBtn.style.display = 'none';
+
+    setTimeout(() => {
+        currentWorld = num;
+        document.body.className = `world-${num}`; 
+        document.getElementById('world-selection-screen').style.display = 'none';
+        document.getElementById('level-selection-screen').style.display = 'flex';
+        document.getElementById('current-world-name').textContent = `Mundo ${num}: ${worldNames[num-1]}`;
+        renderLevels();
+
+        // 2. Esconde o loader após o processamento
+        setTimeout(() => {
+            loader.classList.add('loader-hidden');
+            settingsBtn.style.display = 'block';
+        }, 1200); // Tempo do carregamento interno do mundo
+    }, 400); // Pequeno atraso para a tela de loading cobrir suavemente
 }
 
 function backToWorlds() {
@@ -107,9 +127,7 @@ function renderLevels() {
         const isHard = levelsConfig[i].hasTimer && fixedFactor <= 0.75;
 
         btn.className = `level-node ${progress.stars[i] ? 'completed' : ''} ${isUnlocked ? 'unlocked' : ''} ${isHard ? 'level-hard' : ''}`;
-        
         const diffText = isHard ? '<br><small class="map-diff-tag">DIFÍCIL</small>' : '';
-
         btn.innerHTML = `<span>${i}${levelsConfig[i].hasTimer?'⏱️':''}</span>${diffText}<div class="level-stars">${'⭐'.repeat(progress.stars[i] || 0)}</div>`;
         
         if(isUnlocked) btn.onclick = () => { playSfx('click'); startLevel(i); };
@@ -118,59 +136,51 @@ function renderLevels() {
 }
 
 // --- LÓGICA DO JOGO ---
-
 function startLevel(num) {
+    document.getElementById('settings-modal').style.display = 'none';
+    document.getElementById('settings-trigger').style.display = 'none';
+
     activeLevel = num;
-    const config = levelsConfig[num];
     attempts = 0;
+    comboCount = 0;
+    isFrenzy = false; // Reset Frenesi
+    document.body.classList.remove('frenzy-active');
+
+    const config = levelsConfig[num];
     [firstCard, secondCard, lockBoard] = [null, null, false];
     
-    // Atualizado para mostrar o contador de JOGADAS inicializado
-    const attemptsDisplay = document.getElementById('attempts');
-    attemptsDisplay.textContent = '0';
-    attemptsDisplay.classList.remove('pop-effect'); // Garante que comece sem animação
-
+    document.getElementById('attempts').textContent = '0';
     document.getElementById('current-level-id').textContent = num;
     document.getElementById('best-score').textContent = progress.bests[num] ?? '-';
     document.getElementById('level-selection-screen').style.display = 'none';
     document.getElementById('game-screen').style.display = 'flex';
     
-    createBoard(config.pairs);
+    createBoard(config.pairs, config.isMystery); // Passa info de mistério
     clearInterval(timerInterval);
 
-    const restartBtn = document.getElementById('restart-level-btn');
-    const diffLabel = document.getElementById('difficulty-label');
     const timerBar = document.getElementById('timer-bar');
-    
-    restartBtn.classList.remove('timer-danger');
-    timerBar.style.animation = "none";
-    diffLabel.className = 'difficulty-tag';
+    const diffLabel = document.getElementById('difficulty-label');
+    timerBar.classList.remove('bar-danger');
 
     if (config.hasTimer) {
         const baseTime = config.pairs * 8; 
         const worldSpeedFactor = 1 - ((currentWorld - 1) * 0.1); 
         const fixedFactor = ((num * 123.45) % 0.9) + 0.5; 
-        
         let finalTime = Math.floor(baseTime * fixedFactor * worldSpeedFactor);
 
         if (fixedFactor <= 0.75) {
             finalTime = Math.floor(finalTime * 0.5); 
             diffLabel.textContent = "DIFICIL 🔥"; 
-            diffLabel.classList.add('diff-hard'); 
-            timerBar.style.animation = "pulse-fast 0.3s infinite";
-        } else if (fixedFactor >= 1.2) {
-            diffLabel.textContent = "RELAX ✨";
-            diffLabel.classList.add('diff-easy');
+            diffLabel.className = 'difficulty-tag diff-hard';
         } else {
             diffLabel.textContent = "NORMAL";
-            diffLabel.classList.add('diff-normal');
+            diffLabel.className = 'difficulty-tag diff-normal';
         }
 
+        currentMaxTime = finalTime;
         document.getElementById('timer-container').style.display = 'block';
         runTimer(finalTime);
     } else {
-        diffLabel.textContent = "SEM TEMPO";
-        diffLabel.classList.add('diff-normal');
         document.getElementById('timer-container').style.display = 'none';
     }
 }
@@ -178,29 +188,23 @@ function startLevel(num) {
 function runTimer(seconds) {
     timeLeft = seconds;
     const bar = document.getElementById('timer-bar');
-    const restartBtn = document.getElementById('restart-level-btn');
 
     timerInterval = setInterval(() => {
-        timeLeft -= 0.1;
-        let percentage = (timeLeft / seconds * 100);
-        bar.style.width = percentage + '%';
-
-        if (percentage < 30 && timeLeft < 5) {
-            bar.classList.add('bar-danger');
-            restartBtn.classList.add('timer-danger');
-        }
+        if (!isFrenzy) timeLeft -= 0.1; // NOVO: Tempo não cai no Frenesi
+        
+        let percentage = (timeLeft / currentMaxTime * 100);
+        bar.style.width = Math.max(0, percentage) + '%';
 
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            restartBtn.classList.remove('timer-danger');
             playSfx('error');
-            alert("O tempo te venceu!");
+            alert("O tempo acabou!");
             startLevel(activeLevel);
         }
     }, 100);
 }
 
-function createBoard(pairs) {
+function createBoard(pairs, isMystery) {
     const board = document.getElementById('game-board');
     board.innerHTML = '';
     let total = pairs * 2;
@@ -216,9 +220,17 @@ function createBoard(pairs) {
 
     data.forEach(item => {
         const card = document.createElement('div');
-        card.className = 'card';
+        // NOVO: Adiciona classe mystery se o nível exigir
+        card.className = `card ${isMystery ? 'mystery' : ''}`;
         card.dataset.id = item.id;
         card.innerHTML = `<div class="prop">${item.m}</div><div class="face">${item.f}</div>`;
+        
+        // NOVO: Revelação inicial para cartas mistério
+        if(isMystery) {
+            card.classList.add('unmasked');
+            setTimeout(() => card.classList.remove('unmasked'), 1200);
+        }
+
         card.onclick = flipCard;
         board.appendChild(card);
     });
@@ -228,52 +240,121 @@ function flipCard() {
     if (lockBoard || this === firstCard || this.classList.contains('matched')) return;
     playSfx('flip');
     this.classList.add('unmasked');
+    
     if (!firstCard) { firstCard = this; return; }
+    
     secondCard = this;
-    
     attempts++;
-    const attemptsDisplay = document.getElementById('attempts');
-    attemptsDisplay.textContent = attempts;
-    
+    document.getElementById('attempts').textContent = attempts;
     lockBoard = true;
 
     if (firstCard.dataset.id === secondCard.dataset.id) {
-        // --- ATUALIZAÇÃO: Efeito visual no contador ao acertar ---
-        attemptsDisplay.classList.add('pop-effect');
-        setTimeout(() => attemptsDisplay.classList.remove('pop-effect'), 400);
-
+        // --- ACERTO ---
+        comboCount++; 
+        
+        // NOVO: Inicia Frenesi no Combo 5
+        if (comboCount >= 5 && !isFrenzy) startFrenzy();
+        
+        handleCombo(secondCard); 
         firstCard.classList.add('matched');
         secondCard.classList.add('matched');
         setTimeout(() => playSfx('match'), 200);
         [firstCard, secondCard, lockBoard] = [null, null, false];
+
         if (document.querySelectorAll('.card.matched').length === levelsConfig[activeLevel].pairs * 2) {
             clearInterval(timerInterval);
             setTimeout(win, 500);
         }
     } else {
+        // --- ERRO ---
+        comboCount = 0; 
         playSfx('error');
+        triggerFlash('red'); // NOVO: Flash de dano
+        
+        if (levelsConfig[activeLevel].hasTimer && !isFrenzy) {
+            timeLeft -= 3; 
+            showPenalty(secondCard);
+            const bar = document.getElementById('timer-bar');
+            bar.classList.add('bar-danger');
+            setTimeout(() => bar.classList.remove('bar-danger'), 300);
+        }
+
         this.classList.add('shake');
         firstCard.classList.add('shake');
         setTimeout(() => {
-            firstCard.classList.remove('unmasked', 'shake');
-            secondCard.classList.remove('unmasked', 'shake');
+            if(firstCard) firstCard.classList.remove('unmasked', 'shake');
+            if(secondCard) secondCard.classList.remove('unmasked', 'shake');
             [firstCard, secondCard, lockBoard] = [null, null, false];
         }, 1000);
     }
 }
 
+// --- NOVAS FUNÇÕES DE ADRENALINA ---
+
+function startFrenzy() {
+    isFrenzy = true;
+    playSfx('frenzy');
+    document.body.classList.add('frenzy-active');
+    triggerFlash('gold');
+    
+    // Modo Febre dura 5 segundos
+    setTimeout(() => {
+        isFrenzy = false;
+        document.body.classList.remove('frenzy-active');
+    }, 5000);
+}
+
+function triggerFlash(type) {
+    const screen = document.getElementById('game-screen');
+    const className = type === 'red' ? 'flash-red' : 'flash-gold';
+    screen.classList.add(className);
+    setTimeout(() => screen.classList.remove(className), 500);
+}
+
+// --- EFEITOS ESPECIAIS (COMBO E PUNIÇÃO) ---
+function handleCombo(cardElement) {
+    if (comboCount < 2) return; 
+    playSfx('combo');
+    const comboDiv = document.getElementById('combo-text');
+    const rect = cardElement.getBoundingClientRect();
+    
+    comboDiv.style.left = `${rect.left + rect.width / 2}px`;
+    comboDiv.style.top = `${rect.top}px`;
+    comboDiv.textContent = `COMBO X${comboCount}!`;
+    
+    comboDiv.classList.remove('combo-animation');
+    void comboDiv.offsetWidth; 
+    comboDiv.classList.add('combo-animation');
+
+    if (levelsConfig[activeLevel].hasTimer) {
+        timeLeft += Math.min(comboCount, 5); 
+        const bar = document.getElementById('timer-bar');
+        bar.classList.add('timer-boost');
+        setTimeout(() => bar.classList.remove('timer-boost'), 500);
+    }
+}
+
+function showPenalty(cardElement) {
+    const penaltyDiv = document.getElementById('penalty-text');
+    const rect = cardElement.getBoundingClientRect();
+    penaltyDiv.style.left = `${rect.left + rect.width / 2}px`;
+    penaltyDiv.style.top = `${rect.top}px`;
+    penaltyDiv.textContent = `-3s`;
+    
+    penaltyDiv.classList.remove('penalty-animation');
+    void penaltyDiv.offsetWidth; 
+    penaltyDiv.classList.add('penalty-animation');
+}
+
+// --- VITÓRIA ---
 function win() {
-    document.getElementById('restart-level-btn').classList.remove('timer-danger');
     playSfx('victory');
     let best = progress.bests[activeLevel];
     let isNew = (best === undefined || attempts < best);
     if (isNew) progress.bests[activeLevel] = attempts;
     
     let p = levelsConfig[activeLevel].pairs;
-    let isHard = document.getElementById('difficulty-label').textContent.includes("DIFICIL");
-    
-    let tolerance = isHard ? 4 : 1; 
-    let stars = attempts <= p + tolerance ? 3 : (attempts <= p + tolerance + 3 ? 2 : 1);
+    let stars = attempts <= p + 2 ? 3 : (attempts <= p + 5 ? 2 : 1);
     
     progress.stars[activeLevel] = Math.max(progress.stars[activeLevel] || 0, stars);
     localStorage.setItem('memory_unmasked_v100', JSON.stringify(progress));
@@ -285,62 +366,66 @@ function win() {
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
 }
 
-// --- FUNÇÕES DO MENU DE CONFIGURAÇÕES ---
-
+// --- CONFIGURAÇÕES ---
 function toggleSettings() {
     const modal = document.getElementById('settings-modal');
     modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
     updateMuteUI();
 }
 
+// ==========================================================================
+// ADIÇÃO: SISTEMA DE MUDO ABSOLUTO (PARA INTERROMPER TODOS OS SONS)
+// ==========================================================================
 function toggleMute() {
     isMuted = !isMuted;
     localStorage.setItem('memory_unmasked_muted', JSON.stringify(isMuted));
+    
+    // Se o usuário desligar o som, paramos tudo o que estiver tocando AGORA
+    if (isMuted) {
+        Object.values(sounds).forEach(audio => {
+            audio.pause();        // Para o áudio imediatamente
+            audio.currentTime = 0; // Reseta para o começo
+        });
+    }
+    
     updateMuteUI();
 }
 
 function updateMuteUI() {
     const statusTxt = document.getElementById('mute-status');
-    const icon = document.getElementById('mute-icon');
     if(statusTxt) statusTxt.textContent = isMuted ? "DESLIGADO" : "LIGADO";
-    if(icon) icon.textContent = isMuted ? "🔇" : "🔊";
-    const muteBtn = document.getElementById('mute-btn');
-    if(muteBtn) muteBtn.style.opacity = isMuted ? "0.6" : "1";
 }
 
 // --- EVENTOS ---
 window.addEventListener('load', () => {
+    // ATUALIZAÇÃO: Garante que a engrenagem suma na tela de carregamento inicial também
+    const settingsBtn = document.getElementById('settings-trigger');
+    if(settingsBtn) settingsBtn.style.display = 'none';
+
     setTimeout(() => {
         const loader = document.getElementById('loading-screen');
         if(loader) loader.classList.add('loader-hidden');
+        if(settingsBtn) settingsBtn.style.display = 'block';
         renderWorlds();
     }, 2200);
 });
 
-document.getElementById('restart-level-btn').onclick = () => { 
-    playSfx('click'); 
-    startLevel(activeLevel); 
-};
-
-document.getElementById('back-btn').onclick = () => { 
-    clearInterval(timerInterval); 
-    document.getElementById('game-screen').style.display = 'none'; 
-    document.getElementById('level-selection-screen').style.display = 'flex'; 
-    renderLevels(); 
-};
-
-document.getElementById('continue-btn').onclick = () => { 
-    document.getElementById('victory-modal').style.display = 'none'; 
-    document.getElementById('game-screen').style.display = 'none'; 
-    document.getElementById('level-selection-screen').style.display = 'flex'; 
-    renderLevels(); 
-};
-
-document.getElementById('back-to-worlds').onclick = backToWorlds;
+document.getElementById('restart-level-btn').onclick = () => { startLevel(activeLevel); };
 document.getElementById('mute-btn').onclick = toggleMute;
+document.getElementById('back-btn').onclick = () => {
+    clearInterval(timerInterval);
+    document.getElementById('game-screen').style.display = 'none';
+    document.getElementById('level-selection-screen').style.display = 'flex';
+    document.getElementById('settings-trigger').style.display = 'block';
+    renderLevels();
+};
+document.getElementById('continue-btn').onclick = () => {
+    document.getElementById('victory-modal').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'none';
+    document.getElementById('level-selection-screen').style.display = 'flex';
+    document.getElementById('settings-trigger').style.display = 'block';
+    renderLevels();
+};
 document.getElementById('clear-save-settings').onclick = () => { 
-    if(confirm("ATENÇÃO: Isso apagará todas as suas estrelas e recordes. Deseja continuar?")) { 
-        localStorage.clear(); 
-        location.reload(); 
-    } 
+    if(confirm("Apagar progresso?")) { localStorage.clear(); location.reload(); } 
 };
