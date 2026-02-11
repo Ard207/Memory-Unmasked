@@ -948,3 +948,34 @@ body.world-4::before {
     color: white;
     letter-spacing: 2px;
 }
+
+/* Estilos para a Tela de História */
+#story-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.story-box {
+    background: rgba(30, 41, 59, 0.6);
+    padding: 20px;
+    border-radius: 15px;
+    border-left: 4px solid var(--accent);
+    margin-bottom: 30px;
+    max-width: 90%;
+    line-height: 1.6;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.story-btn {
+    font-size: 1.2rem !important;
+    padding: 15px 40px !important;
+    animation: neon-pulse 2s infinite ease-in-out;
+}
+
+.loader-text {
+    text-shadow: 0 0 10px var(--accent);
+    font-weight: 900;
+}

@@ -207,30 +207,67 @@ function runTimer(seconds) {
 function createBoard(pairs, isMystery) {
     const board = document.getElementById('game-board');
     board.innerHTML = '';
-    let total = pairs * 2;
-    let cols = total <= 8 ? 3 : (total <= 16 ? 4 : 5);
+    
+    const totalCards = pairs * 2;
+    let cols;
+
+    // --- LÓGICA DE ALINHAMENTO SIMÉTRICO ---
+    // Determina o número de colunas para que não sobrem cartas sozinhas
+    if (totalCards % 4 === 0) {
+        cols = 4; // Padrão ideal para a maioria dos níveis
+    } else if (totalCards % 3 === 0) {
+        cols = 3; // Para níveis com 6, 9 ou 15 pares
+    } else if (totalCards % 5 === 0) {
+        cols = 5; // Para níveis maiores (20 ou 30 cartas)
+    } else {
+        cols = 4; // Fallback de segurança
+    }
+
+    // Ajuste Responsivo: Se a tela for pequena (celular), limita a 4 colunas
+    if (window.innerWidth < 400 && cols > 4) {
+        cols = 4;
+    }
+
+    // Aplica a grade dinâmica ao CSS do board
     board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
+    // --- CRIAÇÃO DOS DADOS DAS CARTAS ---
     let data = [];
-    for(let i=0; i<pairs; i++) {
-        let pair = { id: i, m: masks[i % masks.length], f: faces[i % faces.length] };
-        data.push(pair, {...pair});
+    for(let i = 0; i < pairs; i++) {
+        // Pega uma máscara e uma face baseada no índice
+        let pair = { 
+            id: i, 
+            m: masks[i % masks.length], 
+            f: faces[i % faces.length] 
+        };
+        // Adiciona o par (dois objetos com o mesmo ID)
+        data.push(pair, { ...pair });
     }
+
+    // Embaralha as cartas
     data.sort(() => Math.random() - 0.5);
 
+    // --- RENDERIZAÇÃO NO HTML ---
     data.forEach(item => {
         const card = document.createElement('div');
-        // NOVO: Adiciona classe mystery se o nível exigir
+        
+        // Se o nível for do tipo "Mystery", adiciona a classe correspondente
         card.className = `card ${isMystery ? 'mystery' : ''}`;
         card.dataset.id = item.id;
-        card.innerHTML = `<div class="prop">${item.m}</div><div class="face">${item.f}</div>`;
         
-        // NOVO: Revelação inicial para cartas mistério
+        card.innerHTML = `
+            <div class="prop">${item.m}</div>
+            <div class="face">${item.f}</div>
+        `;
+        
+        // Mecânica Especial: Revelação inicial se for nível Mistério
         if(isMystery) {
             card.classList.add('unmasked');
+            // O tempo de exibição inicial (1.2 segundos)
             setTimeout(() => card.classList.remove('unmasked'), 1200);
         }
 
+        // Adiciona o evento de clique para virar a carta
         card.onclick = flipCard;
         board.appendChild(card);
     });
@@ -398,15 +435,18 @@ function updateMuteUI() {
 
 // --- EVENTOS ---
 window.addEventListener('load', () => {
-    // ATUALIZAÇÃO: Garante que a engrenagem suma na tela de carregamento inicial também
     const settingsBtn = document.getElementById('settings-trigger');
     if(settingsBtn) settingsBtn.style.display = 'none';
 
     setTimeout(() => {
         const loader = document.getElementById('loading-screen');
         if(loader) loader.classList.add('loader-hidden');
+        
+        // Mostra a tela de história primeiro, esconde as outras
+        document.getElementById('story-screen').style.display = 'flex';
+        document.getElementById('world-selection-screen').style.display = 'none';
+        
         if(settingsBtn) settingsBtn.style.display = 'block';
-        renderWorlds();
     }, 2200);
 });
 
@@ -428,4 +468,62 @@ document.getElementById('continue-btn').onclick = () => {
 };
 document.getElementById('clear-save-settings').onclick = () => { 
     if(confirm("Apagar progresso?")) { localStorage.clear(); location.reload(); } 
+};
+
+document.getElementById('start-story-btn').onclick = () => {
+    playSfx('click');
+    
+    const loader = document.getElementById('loading-screen');
+    const storyScreen = document.getElementById('story-screen');
+    const worldsScreen = document.getElementById('world-selection-screen');
+
+    // 1. Mostra o carregamento
+    loader.classList.remove('loader-hidden');
+
+    setTimeout(() => {
+        // 2. Troca as telas enquanto o loader está visível
+        storyScreen.style.display = 'none';
+        worldsScreen.style.display = 'flex';
+        renderWorlds();
+
+        // 3. Esconde o carregamento após 1.5 segundos
+        setTimeout(() => {
+            loader.classList.add('loader-hidden');
+        }, 1500); 
+
+    }, 500); // Pequeno delay para o loader cobrir a tela antes da troca
+};
+
+// Ajuste na função backToWorlds para voltar para a tela de história se preferir
+function backToWorlds() {
+    playSfx('click');
+    document.body.className = 'world-1'; 
+    document.getElementById('level-selection-screen').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'none';
+    // Se quiser voltar direto para os mundos:
+    document.getElementById('world-selection-screen').style.display = 'flex';
+    renderWorlds();
+}
+
+document.getElementById('back-to-story-btn').onclick = () => {
+    playSfx('click');
+    
+    const loader = document.getElementById('loading-screen');
+    const loaderText = loader.querySelector('.loader-text');
+    
+    if(loaderText) loaderText.textContent = "RETORNANDO AO INÍCIO...";
+    loader.classList.remove('loader-hidden');
+
+    setTimeout(() => {
+        // Esconde a seleção de mundos e mostra a história
+        document.getElementById('world-selection-screen').style.display = 'none';
+        document.getElementById('story-screen').style.display = 'flex';
+        document.body.className = 'world-1'; // Reseta o fundo para o padrão
+
+        setTimeout(() => {
+            loader.classList.add('loader-hidden');
+            // Reseta o texto do loader para o padrão
+            if(loaderText) setTimeout(() => { loaderText.textContent = "DECODIFICANDO MEMÓRIAS..."; }, 800);
+        }, 1000);
+    }, 500);
 };

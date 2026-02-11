@@ -22,23 +22,42 @@
     <div id="combo-text"></div>
     <div id="penalty-text"></div>
 
-    <div id="world-selection-screen" class="screen">
-        <header class="game-header">
-           <div class="logo-container">
-            <span class="logo-mask">🎭</span> 
-        
-              <div class="title-group">
-               <h1 class="main-title">Memory Unmasked</h1>
-                <p class="subtitle">Desvende os Mistérios</p>
-              </div>
-           </div>
-        </header>
-        
-        <div id="worlds-container" class="worlds-grid">
-            </div>
-        
-        
+    <div id="story-screen" class="screen">
+    <div class="logo-container">
+        <span class="logo-mask">🎭</span> 
+        <div class="title-group">
+            <h1 class="main-title">Memory Unmasked</h1>
+           
+        </div>
     </div>
+
+    <div class="story-box">
+        <p>Em um mundo onde as memórias foram fragmentadas e escondidas sob máscaras digitais, você é o único capaz de decodificar a verdade.</p>
+        <p>Cada par revelado é um segredo desvendado.</p>
+    </div>
+
+    <button id="start-story-btn" class="control-btn story-btn">
+        <span class="icon">📖</span> HISTÓRIA
+    </button>
+   </div>
+
+    <div id="world-selection-screen" class="screen" style="display: none;">
+       <button id="back-to-story-btn" class="control-btn back-abs-btn">
+        <span class="icon">⬅</span> <span class="btn-text">HISTÓRIA</span>
+       </button>
+
+       <header class="game-header">
+        <div class="logo-container">
+            <span class="logo-mask">🎭</span> 
+            <div class="title-group">
+                <h1 class="main-title">Memory Unmasked</h1>
+                <p class="subtitle">Desvende os Mistérios dos mundos </p>
+            </div>
+        </div>
+       </header>
+          
+      <div id="worlds-container" class="worlds-grid"></div>
+     </div>
 
     <div id="level-selection-screen" class="screen" style="display: none;">
         <header class="game-header">
